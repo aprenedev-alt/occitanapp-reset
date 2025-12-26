@@ -1,112 +1,190 @@
 <!doctype html>
 <html lang="fr">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Réinitialiser le mot de passe</title>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Réinitialiser le mot de passe</title>
 
-  <style>
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#f4f6f8;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px}
-    .card{background:#fff;width:100%;max-width:420px;padding:24px;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.1)}
-    h1{margin:0 0 12px;font-size:24px}
-    p{margin:0 0 20px;color:#555;font-size:14px;line-height:1.4}
-    label{font-size:13px;margin-bottom:6px;display:block}
-    input{width:100%;padding:14px;font-size:16px;border-radius:12px;border:1px solid #ddd;margin-bottom:14px;outline:none}
-    input:focus{border-color:#1677ff;box-shadow:0 0 0 3px rgba(22,119,255,.12)}
-    button{width:100%;padding:14px;font-size:16px;border-radius:12px;border:none;background:#1677ff;color:#fff;font-weight:700;cursor:pointer}
-    button:disabled{opacity:.55;cursor:not-allowed}
-    .msg{margin-top:14px;font-size:14px;min-height:20px}
-    .error{color:#d92d20}
-    .ok{color:#027a48}
-  </style>
+    <style>
+      :root {
+        --bg: #f4f6f8;
+        --card: #ffffff;
+        --text: #0b1220;
+        --muted: #5b667a;
+        --primary: #1677ff;
+        --danger: #d92d20;
+        --ok: #027a48;
+        --border: #e6e9ef;
+        --radius: 16px;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        display: grid;
+        place-items: center;
+        min-height: 100vh;
+        padding: 24px;
+      }
+      .wrap { width: 100%; max-width: 520px; }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 22px;
+        box-shadow: 0 8px 30px rgba(16, 24, 40, 0.08);
+      }
+      h1 { margin: 0 0 12px; font-size: 26px; line-height: 1.15; }
+      .sub { margin: 0 0 18px; color: var(--muted); font-size: 14px; }
+      label { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 6px; }
+      input {
+        width: 100%;
+        padding: 14px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        font-size: 16px;
+        outline: none;
+      }
+      input:focus {
+        border-color: rgba(22, 119, 255, 0.5);
+        box-shadow: 0 0 0 4px rgba(22, 119, 255, 0.12);
+      }
+      button {
+        width: 100%;
+        margin-top: 16px;
+        padding: 14px;
+        border: 0;
+        border-radius: 12px;
+        background: var(--primary);
+        color: #fff;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      button[disabled] { opacity: 0.55; cursor: not-allowed; }
+      .msg {
+        margin-top: 14px;
+        padding: 12px;
+        border-radius: 12px;
+        border: 1px dashed var(--border);
+        background: #fafbfc;
+        color: var(--muted);
+        font-size: 13px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        min-height: 44px;
+      }
+      .msg.error { border-color: rgba(217,45,32,0.35); color: var(--danger); background: rgba(217,45,32,0.04); }
+      .msg.ok { border-color: rgba(2,122,72,0.35); color: var(--ok); background: rgba(2,122,72,0.04); }
+    </style>
 
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-</head>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  </head>
 
-<body>
-  <div class="card">
-    <h1>Nouveau mot de passe</h1>
-    <p>Choisissez un nouveau mot de passe pour votre compte.</p>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <h1>Réinitialiser le mot de passe</h1>
+        <p class="sub">Cette page doit être ouverte depuis le lien de récupération.</p>
 
-    <label for="p1">Nouveau mot de passe</label>
-    <input id="p1" type="password" autocomplete="new-password" />
+        <label for="password">Nouveau mot de passe</label>
+        <input id="password" type="password" />
 
-    <label for="p2">Confirmer le mot de passe</label>
-    <input id="p2" type="password" autocomplete="new-password" />
+        <label for="password2">Confirmer le mot de passe</label>
+        <input id="password2" type="password" />
 
-    <button id="btn" disabled>Valider</button>
-    <div id="msg" class="msg"></div>
-  </div>
+        <button id="btn" disabled>Valider</button>
+        <div id="msg" class="msg">Chargement…</div>
+      </div>
+    </div>
 
-  <script>
-    // ✅ REMPLACE UNIQUEMENT CES 2 VALEURS
-    const SUPABASE_URL = "https://bficrofdrgmuljunccsv.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmaWNyb2ZkcmdtdWxqdW5jY3N2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5MzUxNjgsImV4cCI6MjA4MTUxMTE2OH0.xXo9uidS7dIawD7tUCA-T7255Ys14HCMkqh5cBM9Acw";
+    <script>
+      const SUPABASE_URL = "https://bficrofdrgmuljunccsv.supabase.co";
+      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmaWNyb2ZkcmdtdWxqdW5jY3N2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5MzUxNjgsImV4cCI6MjA4MTUxMTE2OH0.xXo9uidS7dIawD7tUCA-T7255Ys14HCMkqh5cBM9Acw";
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      const msgEl = document.getElementById("msg");
+      const btnEl = document.getElementById("btn");
 
-    const btn = document.getElementById("btn");
-    const msg = document.getElementById("msg");
+      function setMsg(text, type) {
+        msgEl.className = "msg" + (type ? " " + type : "");
+        msgEl.textContent = text;
+      }
 
-    function setMsg(text, type) {
-      msg.className = "msg " + (type || "");
-      msg.textContent = text || "";
-    }
+      const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    async function hasSession() {
-      const { data } = await supabase.auth.getSession();
-      return !!data?.session;
-    }
+      function parseHash() {
+        const p = new URLSearchParams(location.hash.replace("#", ""));
+        return {
+          access_token: p.get("access_token"),
+          refresh_token: p.get("refresh_token"),
+          error: p.get("error"),
+          error_description: p.get("error_description"),
+        };
+      }
 
-    async function init() {
-      // 1) Récupère automatiquement la session depuis l'URL (hash #... ou query ?code=...)
-      // -> marche pour les liens "recovery" (reset mdp) sur mobile aussi.
-      try {
-        const { data, error } = await supabase.auth.getSessionFromUrl({ storeSession: true });
-        if (error) {
-          // On continue quand même: parfois l'URL est déjà "clean" mais la session existe
+      async function init() {
+        const hash = parseHash();
+        if (hash.error) {
+          setMsg("Erreur de lien.", "error");
+          return;
         }
-      } catch (_) {}
 
-      // 2) Si une session existe, on active le bouton
-      if (await hasSession()) {
-        btn.disabled = false;
-        setMsg("");
-        return;
-      }
+        const code = new URL(location.href).searchParams.get("code");
+        if (code) {
+          const { error } = await client.auth.exchangeCodeForSession(location.href);
+          if (error) return setMsg("Lien invalide.", "error");
+          btnEl.disabled = false;
+          setMsg("Lien valide.");
+          return;
+        }
 
-      // 3) Sinon, lien pas exploitable / expiré
-      setMsg("Lien invalide ou expiré.", "error");
-      btn.disabled = true;
-    }
+        if (hash.access_token && hash.refresh_token) {
+          const { error } = await client.auth.setSession(hash);
+          if (error) return setMsg("Lien invalide.", "error");
+          btnEl.disabled = false;
+          setMsg("Lien valide.");
+          return;
+        }
 
-    btn.addEventListener("click", async () => {
-      const p1 = document.getElementById("p1").value.trim();
-      const p2 = document.getElementById("p2").value.trim();
+        const { data } = await client.auth.getSession();
+        if (data.session) {
+          btnEl.disabled = false;
+          setMsg("Session active.");
+          return;
+        }
 
-      if (p1.length < 6) { setMsg("Le mot de passe est trop court.", "error"); return; }
-      if (p1 !== p2) { setMsg("Les mots de passe ne correspondent pas.", "error"); return; }
-
-      if (!(await hasSession())) {
         setMsg("Lien invalide ou expiré.", "error");
-        btn.disabled = true;
-        return;
       }
 
-      btn.disabled = true;
-      setMsg("Mise à jour en cours…");
+      async function resetPassword() {
+        const p1 = password.value.trim();
+        const p2 = password2.value.trim();
 
-      const { error } = await supabase.auth.updateUser({ password: p1 });
+        if (p1.length < 6) return setMsg("Mot de passe trop court.", "error");
+        if (p1 !== p2) return setMsg("Les mots de passe ne correspondent pas.", "error");
 
-      if (error) {
-        setMsg("Erreur lors de la mise à jour.", "error");
-        btn.disabled = false;
-      } else {
-        setMsg("Mot de passe modifié avec succès.", "ok");
+        btnEl.disabled = true;
+        setMsg("Mise à jour…");
+
+        const { data } = await client.auth.getSession();
+        if (!data.session) {
+          btnEl.disabled = false;
+          return setMsg("Session absente.", "error");
+        }
+
+        const { error } = await client.auth.updateUser({ password: p1 });
+        if (error) {
+          btnEl.disabled = false;
+          return setMsg("Erreur lors de la mise à jour.", "error");
+        }
+
+        setMsg("Mot de passe modifié.", "ok");
       }
-    });
 
-    init();
-  </script>
-</body>
+      btnEl.addEventListener("click", resetPassword);
+      init();
+    </script>
+  </body>
 </html>
