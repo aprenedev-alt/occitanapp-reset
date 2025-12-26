@@ -6,52 +6,18 @@
   <title>Réinitialiser le mot de passe</title>
 
   <style>
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: #f4f6f8;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 20px;
-    }
-    .card {
-      background: #fff;
-      width: 100%;
-      max-width: 420px;
-      padding: 24px;
-      border-radius: 16px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.1);
-    }
-    h1 { margin: 0 0 12px; font-size: 24px; }
-    p { margin: 0 0 20px; color: #555; font-size: 14px; line-height: 1.4; }
-    label { font-size: 13px; margin-bottom: 6px; display: block; }
-    input {
-      width: 100%;
-      padding: 14px;
-      font-size: 16px;
-      border-radius: 12px;
-      border: 1px solid #ddd;
-      margin-bottom: 14px;
-      outline: none;
-    }
-    input:focus { border-color: #1677ff; box-shadow: 0 0 0 3px rgba(22,119,255,.12); }
-    button {
-      width: 100%;
-      padding: 14px;
-      font-size: 16px;
-      border-radius: 12px;
-      border: none;
-      background: #1677ff;
-      color: #fff;
-      font-weight: 700;
-      cursor: pointer;
-    }
-    button:disabled { opacity: .6; cursor: not-allowed; }
-    .msg { margin-top: 14px; font-size: 14px; min-height: 20px; }
-    .error { color: #d92d20; }
-    .ok { color: #027a48; }
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#f4f6f8;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px}
+    .card{background:#fff;width:100%;max-width:420px;padding:24px;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.1)}
+    h1{margin:0 0 12px;font-size:24px}
+    p{margin:0 0 20px;color:#555;font-size:14px;line-height:1.4}
+    label{font-size:13px;margin-bottom:6px;display:block}
+    input{width:100%;padding:14px;font-size:16px;border-radius:12px;border:1px solid #ddd;margin-bottom:14px;outline:none}
+    input:focus{border-color:#1677ff;box-shadow:0 0 0 3px rgba(22,119,255,.12)}
+    button{width:100%;padding:14px;font-size:16px;border-radius:12px;border:none;background:#1677ff;color:#fff;font-weight:700;cursor:pointer}
+    button:disabled{opacity:.55;cursor:not-allowed}
+    .msg{margin-top:14px;font-size:14px;min-height:20px}
+    .error{color:#d92d20}
+    .ok{color:#027a48}
   </style>
 
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -73,6 +39,7 @@
   </div>
 
   <script>
+    // ✅ REMPLACE UNIQUEMENT CES 2 VALEURS
     const SUPABASE_URL = "https://bficrofdrgmuljunccsv.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmaWNyb2ZkcmdtdWxqdW5jY3N2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5MzUxNjgsImV4cCI6MjA4MTUxMTE2OH0.xXo9uidS7dIawD7tUCA-T7255Ys14HCMkqh5cBM9Acw";
 
@@ -86,55 +53,31 @@
       msg.textContent = text || "";
     }
 
-    function enableForm() {
-      btn.disabled = false;
-      setMsg("");
-    }
-
-    function getHashParams() {
-      const h = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : "";
-      return new URLSearchParams(h);
-    }
-
-    async function ensureSession() {
+    async function hasSession() {
       const { data } = await supabase.auth.getSession();
       return !!data?.session;
     }
 
-    async function ensureSessionAndEnable() {
-      const ok = await ensureSession();
-      if (ok) enableForm();
-      return ok;
-    }
-
     async function init() {
-      // 1) Cas tokens dans le hash (#access_token=...&refresh_token=...)
-      const hp = getHashParams();
-      const access_token = hp.get("access_token");
-      const refresh_token = hp.get("refresh_token");
+      // 1) Récupère automatiquement la session depuis l'URL (hash #... ou query ?code=...)
+      // -> marche pour les liens "recovery" (reset mdp) sur mobile aussi.
+      try {
+        const { data, error } = await supabase.auth.getSessionFromUrl({ storeSession: true });
+        if (error) {
+          // On continue quand même: parfois l'URL est déjà "clean" mais la session existe
+        }
+      } catch (_) {}
 
-      if (access_token && refresh_token) {
-        const { error } = await supabase.auth.setSession({ access_token, refresh_token });
-        if (!error && await ensureSessionAndEnable()) return;
-        setMsg("Lien invalide ou expiré.", "error");
+      // 2) Si une session existe, on active le bouton
+      if (await hasSession()) {
+        btn.disabled = false;
+        setMsg("");
         return;
       }
 
-      // 2) Cas code dans l'URL (?code=...)
-      const url = new URL(window.location.href);
-      const code = url.searchParams.get("code");
-
-      if (code) {
-        // URL "clean" (sans hash)
-        const cleanUrl = url.origin + url.pathname + url.search;
-        const { error } = await supabase.auth.exchangeCodeForSession(cleanUrl);
-        if (!error && await ensureSessionAndEnable()) return;
-        setMsg("Lien invalide ou expiré.", "error");
-        return;
-      }
-
-      // 3) Rien d'exploitable
+      // 3) Sinon, lien pas exploitable / expiré
       setMsg("Lien invalide ou expiré.", "error");
+      btn.disabled = true;
     }
 
     btn.addEventListener("click", async () => {
@@ -144,9 +87,11 @@
       if (p1.length < 6) { setMsg("Le mot de passe est trop court.", "error"); return; }
       if (p1 !== p2) { setMsg("Les mots de passe ne correspondent pas.", "error"); return; }
 
-      // sécurité : si pas de session, inutile
-      const ok = await ensureSession();
-      if (!ok) { setMsg("Lien invalide ou expiré.", "error"); btn.disabled = true; return; }
+      if (!(await hasSession())) {
+        setMsg("Lien invalide ou expiré.", "error");
+        btn.disabled = true;
+        return;
+      }
 
       btn.disabled = true;
       setMsg("Mise à jour en cours…");
@@ -165,4 +110,3 @@
   </script>
 </body>
 </html>
-```0
