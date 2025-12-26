@@ -1,1 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Réinitialisation du mot de passe</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    .box {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      font-size: 20px;
+      margin-bottom: 15px;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 16px;
+    }
+    button {
+      background: #1e88e5;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .error {
+      color: red;
+      margin-top: 10px;
+    }
+    .success {
+      color: green;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="box">
+  <h1>Nouveau mot de passe</h1>
+  <input id="password" type="password" placeholder="Nouveau mot de passe" />
+  <button onclick="resetPassword()">Valider</button>
+  <div id="message"></div>
+</div>
+
+<script>
+  // 🔴 REMPLACE CES VALEURS
+  const SUPABASE_URL = "https://bficrofdrgmuljunccsv.supabase.co";
+  const SUPABASE_ANON_KEY = "TA_CLE_ANON_PUBLIQUE_ICI";
+
+  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  async function resetPassword() {
+    const password = document.getElementById("password").value;
+    const message = document.getElementById("message");
+
+    if (password.length < 6) {
+      message.innerHTML = "<div class='error'>Mot de passe trop court</div>";
+      return;
+    }
+
+    const { error } = await supabase.auth.updateUser({ password });
+
+    if (error) {
+      message.innerHTML = "<div class='error'>" + error.message + "</div>";
+    } else {
+      message.innerHTML = "<div class='success'>Mot de passe modifié avec succès ✅</div>";
+    }
+  }
+</script>
+
+</body>
+</html>
