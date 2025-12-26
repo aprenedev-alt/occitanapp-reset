@@ -2,88 +2,187 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Réinitialisation du mot de passe</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Réinitialiser le mot de passe</title>
 
-  <!-- Supabase JS -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Supabase JS v2 (UMD) -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #f5f5f5;
       display: flex;
-      align-items: center;
       justify-content: center;
-      height: 100vh;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 16px;
     }
     .box {
       background: white;
-      padding: 20px;
-      border-radius: 8px;
-      width: 100%;
-      max-width: 400px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      padding: 22px;
+      border-radius: 10px;
+      width: 360px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
     }
-    h1 {
-      font-size: 20px;
-      margin-bottom: 15px;
-    }
+    h2 { margin: 0 0 14px; }
     input, button {
       width: 100%;
-      padding: 10px;
-      margin-top: 10px;
+      margin-top: 12px;
+      padding: 12px;
       font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      box-sizing: border-box;
     }
     button {
-      background: #1e88e5;
-      color: white;
       border: none;
-      border-radius: 4px;
+      background: #0B84F3;
+      color: white;
+      font-weight: 800;
       cursor: pointer;
     }
-    .error {
-      color: red;
-      margin-top: 10px;
-    }
-    .success {
-      color: green;
-      margin-top: 10px;
-    }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    #msg { margin-top: 12px; font-weight: 700; color: #374151; white-space: pre-wrap; }
+    .muted { color: #6B7280; font-size: 13px; margin-top: 8px; }
   </style>
 </head>
 <body>
 
 <div class="box">
-  <h1>Nouveau mot de passe</h1>
-  <input id="password" type="password" placeholder="Nouveau mot de passe" />
-  <button onclick="resetPassword()">Valider</button>
-  <div id="message"></div>
+  <h2>Nouveau mot de passe</h2>
+
+  <input type="password" id="password" placeholder="Nouveau mot de passe" />
+  <input type="password" id="password2" placeholder="Confirmer le mot de passe" />
+
+  <button id="btn" onclick="resetPassword()">Valider</button>
+
+  <div class="muted">
+    Si rien ne marche, envoie-moi le message affiché ci-dessous.
+  </div>
+
+  <p id="msg"></p>
 </div>
 
 <script>
-  const SUPABASE_URL = "https://bficrofdrgmuljunccsv.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmaWNyb2ZkcmdtdWxqdW5jY3N2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5MzUxNjgsImV4cCI6MjA4MTUxMTE2OH0.xXo9uidS7dIawD7tUCA-T7255Ys14HCMkqh5cBM9Acw";
+  // ✅ Mets ICI tes vraies valeurs
+  const SUPABASE_URL = "TON_SUPABASE_URL";
+  const SUPABASE_ANON_KEY = "TON_ANON_PUBLIC_KEY";
 
-  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const msgEl = document.getElementById("msg");
+  const btnEl = document.getElementById("btn");
 
-  async function resetPassword() {
-    const password = document.getElementById("password").value;
-    const message = document.getElementById("message");
+  function logMsg(text) {
+    msgEl.textContent = text;
+    console.log(text);
+  }
 
-    if (password.length < 6) {
-      message.innerHTML = "<div class='error'>Mot de passe trop court</div>";
-      return;
+  // ✅ UMD expose généralement window.supabase (pas supabaseJs)
+  const supabaseLib = window.supabase;
+  if (!supabaseLib || !supabaseLib.createClient) {
+    logMsg("Erreur: la librairie Supabase n'est pas chargée (window.supabase introuvable).");
+  }
+
+  const client = supabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // --- Helpers pour récupérer la session depuis l'URL
+  function parseHashTokens() {
+    // ex: #access_token=...&refresh_token=...&type=recovery
+    const h = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : window.location.hash;
+    const params = new URLSearchParams(h);
+    const access_token = params.get("access_token");
+    const refresh_token = params.get("refresh_token");
+    const type = params.get("type");
+    return { access_token, refresh_token, type };
+  }
+
+  async function ensureSessionFromUrl() {
+    // 1) Mode moderne: ?code=...
+    const url = new URL(window.location.href);
+    const code = url.searchParams.get("code");
+
+    if (code) {
+      logMsg("Session: échange du code en cours…");
+      const { data, error } = await client.auth.exchangeCodeForSession(window.location.href);
+      if (error) {
+        logMsg("Erreur exchangeCodeForSession:\n" + error.message);
+        return false;
+      }
+      logMsg("Session OK (mode code).");
+      return true;
     }
 
-    const { error } = await supabase.auth.updateUser({ password });
+    // 2) Mode ancien: tokens dans le hash
+    const { access_token, refresh_token, type } = parseHashTokens();
+    if (access_token && refresh_token) {
+      logMsg("Session: récupération via tokens…");
+      const { error } = await client.auth.setSession({ access_token, refresh_token });
+      if (error) {
+        logMsg("Erreur setSession:\n" + error.message);
+        return false;
+      }
+      logMsg("Session OK (mode tokens). Type=" + (type || "inconnu"));
+      return true;
+    }
 
-    if (error) {
-      message.innerHTML = "<div class='error'>" + error.message + "</div>";
-    } else {
-      message.innerHTML = "<div class='success'>Mot de passe modifié avec succès ✅</div>";
+    // 3) Sinon: on essaie de voir si une session existe déjà
+    const { data } = await client.auth.getSession();
+    if (data && data.session) {
+      logMsg("Session déjà présente.");
+      return true;
+    }
+
+    logMsg("Aucune session détectée dans l’URL.\n➡️ Ouvre ce lien depuis l’email Supabase (recovery) sur le même navigateur.");
+    return false;
+  }
+
+  // Au chargement: on tente de préparer la session
+  (async () => {
+    btnEl.disabled = true;
+    const ok = await ensureSessionFromUrl();
+    btnEl.disabled = !ok;
+  })();
+
+  // --- Action bouton
+  async function resetPassword() {
+    try {
+      const p1 = document.getElementById("password").value;
+      const p2 = document.getElementById("password2").value;
+
+      if (!p1 || p1.length < 6) {
+        return logMsg("Mot de passe trop court (minimum 6 caractères).");
+      }
+      if (p1 !== p2) {
+        return logMsg("Les deux mots de passe ne correspondent pas.");
+      }
+
+      btnEl.disabled = true;
+      logMsg("Mise à jour en cours…");
+
+      // Vérifie session
+      const { data: s } = await client.auth.getSession();
+      if (!s.session) {
+        btnEl.disabled = false;
+        return logMsg("Pas de session active.\n➡️ Re-clique sur le lien de l’email (recovery) puis réessaie.");
+      }
+
+      const { error } = await client.auth.updateUser({ password: p1 });
+
+      if (error) {
+        btnEl.disabled = false;
+        return logMsg("Erreur updateUser:\n" + error.message);
+      }
+
+      logMsg("✅ Mot de passe modifié avec succès.\nTu peux fermer cette page et te reconnecter dans l’app.");
+    } catch (e) {
+      btnEl.disabled = false;
+      logMsg("Erreur inattendue:\n" + (e?.message || String(e)));
     }
   }
+
+  // expose pour le onclick
+  window.resetPassword = resetPassword;
 </script>
 
 </body>
