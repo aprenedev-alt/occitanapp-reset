@@ -1,189 +1,329 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Réinitialiser le mot de passe</title>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Réinitialiser le mot de passe</title>
+    <style>
+      :root {
+        --bg: #f4f6f8;
+        --card: #ffffff;
+        --text: #0b1220;
+        --muted: #5b667a;
+        --primary: #1677ff;
+        --danger: #d92d20;
+        --border: #e6e9ef;
+        --radius: 16px;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        display: grid;
+        place-items: center;
+        min-height: 100vh;
+        padding: 24px;
+      }
+      .wrap { width: 100%; max-width: 520px; }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 22px;
+        box-shadow: 0 8px 30px rgba(16, 24, 40, 0.08);
+      }
+      h1 {
+        margin: 0 0 14px 0;
+        font-size: 26px;
+        line-height: 1.15;
+      }
+      .sub {
+        margin: 0 0 18px 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      label {
+        display: block;
+        font-size: 13px;
+        color: var(--muted);
+        margin: 12px 0 6px;
+      }
+      input {
+        width: 100%;
+        padding: 14px 14px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        font-size: 16px;
+        outline: none;
+        background: #fff;
+      }
+      input:focus { border-color: rgba(22, 119, 255, 0.5); box-shadow: 0 0 0 4px rgba(22,119,255,0.12); }
+      .row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-top: 16px;
+      }
+      button {
+        width: 100%;
+        padding: 14px 16px;
+        border: 0;
+        border-radius: 12px;
+        background: var(--primary);
+        color: #fff;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      button[disabled] {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      .msg {
+        margin-top: 14px;
+        padding: 12px 12px;
+        border-radius: 12px;
+        border: 1px dashed var(--border);
+        background: #fafbfc;
+        color: var(--muted);
+        font-size: 13px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        min-height: 44px;
+      }
+      .msg.error { border-color: rgba(217,45,32,0.35); color: var(--danger); background: rgba(217,45,32,0.04); }
+      .msg.ok { border-color: rgba(2,122,72,0.35); color: #027a48; background: rgba(2,122,72,0.04); }
+      .footer {
+        margin-top: 14px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .tiny {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 8px;
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        font-size: 12px;
+      }
+    </style>
 
-  <!-- Supabase JS v2 (UMD) -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <!-- Supabase JS v2 -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  </head>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 16px;
-    }
-    .box {
-      background: white;
-      padding: 22px;
-      border-radius: 10px;
-      width: 360px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-    }
-    h2 { margin: 0 0 14px; }
-    input, button {
-      width: 100%;
-      margin-top: 12px;
-      padding: 12px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: 1px solid #ddd;
-      box-sizing: border-box;
-    }
-    button {
-      border: none;
-      background: #0B84F3;
-      color: white;
-      font-weight: 800;
-      cursor: pointer;
-    }
-    button:disabled { opacity: 0.6; cursor: not-allowed; }
-    #msg { margin-top: 12px; font-weight: 700; color: #374151; white-space: pre-wrap; }
-    .muted { color: #6B7280; font-size: 13px; margin-top: 8px; }
-  </style>
-</head>
-<body>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <h1>Réinitialiser le mot de passe</h1>
+        <p class="sub">
+          Ouvre cette page uniquement via le lien reçu par email.
+        </p>
 
-<div class="box">
-  <h2>Nouveau mot de passe</h2>
+        <label for="password">Nouveau mot de passe</label>
+        <input id="password" type="password" placeholder="Au moins 6 caractères" />
 
-  <input type="password" id="password" placeholder="Nouveau mot de passe" />
-  <input type="password" id="password2" placeholder="Confirmer le mot de passe" />
+        <label for="password2">Confirmer le mot de passe</label>
+        <input id="password2" type="password" placeholder="Retape le même" />
 
-  <button id="btn" onclick="resetPassword()">Valider</button>
+        <div class="row">
+          <button id="btn" onclick="resetPassword()" disabled>Valider</button>
+        </div>
 
-  <div class="muted">
-    Si rien ne marche, envoie-moi le message affiché ci-dessous.
-  </div>
+        <div id="msg" class="msg">Chargement…</div>
 
-  <p id="msg"></p>
-</div>
+        <div class="footer">
+          Si ça bloque : fais une capture du message ci-dessus.
+        </div>
 
-<script>
-  // ✅ Mets ICI tes vraies valeurs
-  const SUPABASE_URL = "https://bficrofdrgmuljunccsv.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmaWNyb2ZkcmdtdWxqdW5jY3N2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5MzUxNjgsImV4cCI6MjA4MTUxMTE2OH0.xXo9uidS7dIawD7tUCA-T7255Ys14HCMkqh5cBM9Acw";
+        <div class="tiny">
+          Astuce: si tu vois <code>localhost</code> dans l’URL, c’est que Supabase redirige mal.
+        </div>
+      </div>
+    </div>
 
-  const msgEl = document.getElementById("msg");
-  const btnEl = document.getElementById("btn");
+    <script>
+      // =========================
+      // 1) REMPLACE ICI
+      // =========================
+      const SUPABASE_URL = "https://bficrofdrgmuljunccsv.supabase.co";
+      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmaWNyb2ZkcmdtdWxqdW5jY3N2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5MzUxNjgsImV4cCI6MjA4MTUxMTE2OH0.xXo9uidS7dIawD7tUCA-T7255Ys14HCMkqh5cBM9Acw";
 
-  function logMsg(text) {
-    msgEl.textContent = text;
-    console.log(text);
-  }
+      // =========================
+      // 2) UI helpers
+      // =========================
+      const msgEl = document.getElementById("msg");
+      const btnEl = document.getElementById("btn");
 
-  // ✅ UMD expose généralement window.supabase (pas supabaseJs)
-  const supabaseLib = window.supabase;
-  if (!supabaseLib || !supabaseLib.createClient) {
-    logMsg("Erreur: la librairie Supabase n'est pas chargée (window.supabase introuvable).");
-  }
+      function setMsg(text, type = "info") {
+        msgEl.classList.remove("error", "ok");
+        if (type === "error") msgEl.classList.add("error");
+        if (type === "ok") msgEl.classList.add("ok");
+        msgEl.textContent = text;
+        console.log(text);
+      }
 
-  const client = supabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      function mustHaveConfig() {
+        if (!SUPABASE_URL || SUPABASE_URL.includes("TON_SUPABASE_URL")) {
+          setMsg("❌ Tu n'as pas mis SUPABASE_URL.\n➡️ Remplace TON_SUPABASE_URL dans le code.", "error");
+          return false;
+        }
+        if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.includes("TON_SUPABASE_ANON_KEY")) {
+          setMsg("❌ Tu n'as pas mis SUPABASE_ANON_KEY.\n➡️ Remplace TON_SUPABASE_ANON_KEY dans le code.", "error");
+          return false;
+        }
+        return true;
+      }
 
-  // --- Helpers pour récupérer la session depuis l'URL
-  function parseHashTokens() {
-    // ex: #access_token=...&refresh_token=...&type=recovery
-    const h = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : window.location.hash;
-    const params = new URLSearchParams(h);
-    const access_token = params.get("access_token");
-    const refresh_token = params.get("refresh_token");
-    const type = params.get("type");
-    return { access_token, refresh_token, type };
-  }
+      // =========================
+      // 3) Création du client (AVANT tout)
+      // =========================
+      if (!window.supabase || !window.supabase.createClient) {
+        setMsg("❌ Supabase JS n'est pas chargé.\nVérifie l'accès internet / le script CDN.", "error");
+        throw new Error("Supabase JS not loaded");
+      }
 
-  async function ensureSessionFromUrl() {
-    // 1) Mode moderne: ?code=...
-    const url = new URL(window.location.href);
-    const code = url.searchParams.get("code");
+      if (!mustHaveConfig()) {
+        // Pas la peine de continuer
+      }
 
-    if (code) {
-      logMsg("Session: échange du code en cours…");
-      const { data, error } = await client.auth.exchangeCodeForSession(window.location.href);
-      if (error) {
-        logMsg("Erreur exchangeCodeForSession:\n" + error.message);
+      const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      // =========================
+      // 4) Session depuis URL
+      // - Supabase peut renvoyer soit:
+      // a) ?code=... (PKCE)
+      // b) #access_token=...&refresh_token=... (implicit)
+      // =========================
+      function parseHashTokens() {
+        const h = window.location.hash.replace("#", "");
+        const p = new URLSearchParams(h);
+        return {
+          access_token: p.get("access_token"),
+          refresh_token: p.get("refresh_token"),
+          type: p.get("type"),
+          error: p.get("error"),
+          error_description: p.get("error_description"),
+        };
+      }
+
+      async function ensureSessionFromUrl() {
+        // Si l'URL contient une erreur Supabase
+        const hash = parseHashTokens();
+        if (hash.error) {
+          setMsg("❌ Erreur dans le lien Supabase:\n" + (hash.error_description || hash.error), "error");
+          return false;
+        }
+
+        // Mode PKCE : ?code=...
+        const url = new URL(window.location.href);
+        const code = url.searchParams.get("code");
+
+        if (code) {
+          setMsg("🔄 Validation du lien (code)…");
+          const { error } = await client.auth.exchangeCodeForSession(window.location.href);
+          if (error) {
+            setMsg("❌ Échec validation code:\n" + error.message, "error");
+            return false;
+          }
+          setMsg("✅ Lien valide. Tu peux changer ton mot de passe.");
+          return true;
+        }
+
+        // Mode tokens dans le hash
+        if (hash.access_token && hash.refresh_token) {
+          setMsg("🔄 Validation du lien (token)…");
+          const { error } = await client.auth.setSession({
+            access_token: hash.access_token,
+            refresh_token: hash.refresh_token,
+          });
+          if (error) {
+            setMsg("❌ Échec validation token:\n" + error.message, "error");
+            return false;
+          }
+          setMsg("✅ Lien valide. Tu peux changer ton mot de passe.");
+          return true;
+        }
+
+        // Déjà une session ?
+        const { data, error } = await client.auth.getSession();
+        if (error) {
+          setMsg("❌ Erreur getSession:\n" + error.message, "error");
+          return false;
+        }
+        if (data.session) {
+          setMsg("✅ Session déjà active. Tu peux changer ton mot de passe.");
+          return true;
+        }
+
+        setMsg(
+          "❌ Aucun token détecté dans l’URL.\n" +
+            "➡️ Ouvre cette page UNIQUEMENT en cliquant sur le lien dans l'email Supabase.",
+          "error"
+        );
         return false;
       }
-      logMsg("Session OK (mode code).");
-      return true;
-    }
 
-    // 2) Mode ancien: tokens dans le hash
-    const { access_token, refresh_token, type } = parseHashTokens();
-    if (access_token && refresh_token) {
-      logMsg("Session: récupération via tokens…");
-      const { error } = await client.auth.setSession({ access_token, refresh_token });
-      if (error) {
-        logMsg("Erreur setSession:\n" + error.message);
-        return false;
-      }
-      logMsg("Session OK (mode tokens). Type=" + (type || "inconnu"));
-      return true;
-    }
+      // =========================
+      // 5) Update password
+      // =========================
+      async function resetPassword() {
+        try {
+          const p1 = document.getElementById("password").value.trim();
+          const p2 = document.getElementById("password2").value.trim();
 
-    // 3) Sinon: on essaie de voir si une session existe déjà
-    const { data } = await client.auth.getSession();
-    if (data && data.session) {
-      logMsg("Session déjà présente.");
-      return true;
-    }
+          if (!p1 || p1.length < 6) return setMsg("❌ Mot de passe trop court (min 6).", "error");
+          if (p1 !== p2) return setMsg("❌ Les mots de passe ne correspondent pas.", "error");
 
-    logMsg("Aucune session détectée dans l’URL.\n➡️ Ouvre ce lien depuis l’email Supabase (recovery) sur le même navigateur.");
-    return false;
-  }
+          btnEl.disabled = true;
+          setMsg("🔄 Mise à jour du mot de passe…");
 
-  // Au chargement: on tente de préparer la session
-  (async () => {
-    btnEl.disabled = true;
-    const ok = await ensureSessionFromUrl();
-    btnEl.disabled = !ok;
-  })();
+          const { data, error: sErr } = await client.auth.getSession();
+          if (sErr) {
+            btnEl.disabled = false;
+            return setMsg("❌ Erreur session:\n" + sErr.message, "error");
+          }
+          if (!data.session) {
+            btnEl.disabled = false;
+            return setMsg("❌ Pas de session active.\n➡️ Clique à nouveau sur le lien reçu par email.", "error");
+          }
 
-  // --- Action bouton
-  async function resetPassword() {
-    try {
-      const p1 = document.getElementById("password").value;
-      const p2 = document.getElementById("password2").value;
+          const { error } = await client.auth.updateUser({ password: p1 });
 
-      if (!p1 || p1.length < 6) {
-        return logMsg("Mot de passe trop court (minimum 6 caractères).");
-      }
-      if (p1 !== p2) {
-        return logMsg("Les deux mots de passe ne correspondent pas.");
+          if (error) {
+            btnEl.disabled = false;
+            return setMsg("❌ Erreur updateUser:\n" + error.message, "error");
+          }
+
+          setMsg("✅ Mot de passe modifié !\n➡️ Tu peux retourner dans l’app et te connecter.", "ok");
+        } catch (e) {
+          btnEl.disabled = false;
+          setMsg("❌ Erreur inattendue:\n" + (e?.message || String(e)), "error");
+        }
       }
 
-      btnEl.disabled = true;
-      logMsg("Mise à jour en cours…");
+      window.resetPassword = resetPassword;
 
-      // Vérifie session
-      const { data: s } = await client.auth.getSession();
-      if (!s.session) {
-        btnEl.disabled = false;
-        return logMsg("Pas de session active.\n➡️ Re-clique sur le lien de l’email (recovery) puis réessaie.");
-      }
-
-      const { error } = await client.auth.updateUser({ password: p1 });
-
-      if (error) {
-        btnEl.disabled = false;
-        return logMsg("Erreur updateUser:\n" + error.message);
-      }
-
-      logMsg("✅ Mot de passe modifié avec succès.\nTu peux fermer cette page et te reconnecter dans l’app.");
-    } catch (e) {
-      btnEl.disabled = false;
-      logMsg("Erreur inattendue:\n" + (e?.message || String(e)));
-    }
-  }
-
-  // expose pour le onclick
-  window.resetPassword = resetPassword;
-</script>
-
-</body>
+      // =========================
+      // 6) Boot
+      // =========================
+      (async () => {
+        try {
+          btnEl.disabled = true;
+          if (!mustHaveConfig()) return;
+          const ok = await ensureSessionFromUrl();
+          btnEl.disabled = !ok;
+        } catch (e) {
+          btnEl.disabled = false;
+          setMsg("❌ Erreur boot:\n" + (e?.message || String(e)), "error");
+        }
+      })();
+    </script>
+  </body>
 </html>
