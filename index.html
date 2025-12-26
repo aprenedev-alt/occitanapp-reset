@@ -1,286 +1,180 @@
-
-Aprene occ <aprene.dev@gmail.com>
-4:11 PM (0 minutes ago)
-to rolrodriguezenzo921@gmail.com
-
 <!doctype html>
 <html lang="fr">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Réinitialiser le mot de passe</title>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Réinitialiser le mot de passe</title>
 
-    <style>
-      :root {
-        --bg: #f4f6f8;
-        --card: #ffffff;
-        --text: #0b1220;
-        --muted: #5b667a;
-        --primary: #1677ff;
-        --danger: #d92d20;
-        --ok: #027a48;
-        --border: #e6e9ef;
-        --radius: 16px;
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: #f4f6f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .card {
+      background: #fff;
+      width: 100%;
+      max-width: 420px;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.1);
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: 24px;
+    }
+
+    p {
+      margin: 0 0 20px;
+      color: #555;
+      font-size: 14px;
+    }
+
+    label {
+      font-size: 13px;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      border-radius: 12px;
+      border: 1px solid #ddd;
+      margin-bottom: 14px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      border-radius: 12px;
+      border: none;
+      background: #1677ff;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
+
+    .msg {
+      margin-top: 14px;
+      font-size: 14px;
+      min-height: 20px;
+    }
+
+    .error { color: #d92d20; }
+    .ok { color: #027a48; }
+  </style>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+  <div class="card">
+    <h1>Nouveau mot de passe</h1>
+    <p>Choisissez un nouveau mot de passe pour votre compte.</p>
+
+    <label>Nouveau mot de passe</label>
+    <input id="p1" type="password" />
+
+    <label>Confirmer le mot de passe</label>
+    <input id="p2" type="password" />
+
+    <button id="btn" disabled>Valider</button>
+
+    <div id="msg" class="msg"></div>
+  </div>
+
+<script>
+  const SUPABASE_URL = "https://bficrofdrgmuljunccsv.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmaWNyb2ZkcmdtdWxqdW5jY3N2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5MzUxNjgsImV4cCI6MjA4MTUxMTE2OH0.xXo9uidS7dIawD7tUCA-T7255Ys14HCMkqh5cBM9Acw";
+
+  const supabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
+
+  const btn = document.getElementById("btn");
+  const msg = document.getElementById("msg");
+
+  function setMsg(text, type) {
+    msg.className = "msg " + (type || "");
+    msg.textContent = text || "";
+  }
+
+  function parseHash() {
+    const h = window.location.hash.replace("#", "");
+    return new URLSearchParams(h);
+  }
+
+  async function initSession() {
+    const params = parseHash();
+
+    if (params.get("access_token")) {
+      await supabase.auth.setSession({
+        access_token: params.get("access_token"),
+        refresh_token: params.get("refresh_token"),
+      });
+      btn.disabled = false;
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    const code = url.searchParams.get("code");
+    if (code) {
+      const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+      if (!error) {
+        btn.disabled = false;
+      } else {
+        setMsg("Lien invalide ou expiré.", "error");
       }
-      * { box-sizing: border-box; }
-      body {
-        margin: 0;
-        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-        background: var(--bg);
-        color: var(--text);
-        display: grid;
-        place-items: center;
-        min-height: 100vh;
-        padding: 24px;
-      }
-      .wrap { width: 100%; max-width: 520px; }
-      .card {
-        background: var(--card);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: 22px;
-        box-shadow: 0 8px 30px rgba(16, 24, 40, 0.08);
-      }
-      h1 { margin: 0 0 12px; font-size: 26px; line-height: 1.15; }
-      .sub { margin: 0 0 18px; color: var(--muted); font-size: 14px; }
-      label { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 6px; }
-      input {
-        width: 100%;
-        padding: 14px 14px;
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        font-size: 16px;
-        outline: none;
-        background: #fff;
-      }
-      input:focus {
-        border-color: rgba(22, 119, 255, 0.5);
-        box-shadow: 0 0 0 4px rgba(22, 119, 255, 0.12);
-      }
-      button {
-        width: 100%;
-        margin-top: 16px;
-        padding: 14px 16px;
-        border: 0;
-        border-radius: 12px;
-        background: var(--primary);
-        color: #fff;
-        font-size: 16px;
-        font-weight: 700;
-        cursor: pointer;
-      }
-      button[disabled] { opacity: 0.55; cursor: not-allowed; }
-      .msg {
-        margin-top: 14px;
-        padding: 12px 12px;
-        border-radius: 12px;
-        border: 1px dashed var(--border);
-        background: #fafbfc;
-        color: var(--muted);
-        font-size: 13px;
-        white-space: pre-wrap;
-        word-break: break-word;
-        min-height: 44px;
-      }
-      .msg.error { border-color: rgba(217,45,32,0.35); color: var(--danger); background: rgba(217,45,32,0.04); }
-      .msg.ok { border-color: rgba(2,122,72,0.35); color: var(--ok); background: rgba(2,122,72,0.04); }
-      .tiny { font-size: 12px; color: var(--muted); margin-top: 10px; }
-      code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 12px; }
-    </style>
+      return;
+    }
 
-    <!-- Supabase JS v2 -->
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  </head>
+    setMsg("Lien invalide ou expiré.", "error");
+  }
 
-  <body>
-    <div class="wrap">
-      <div class="card">
-        <h1>Réinitialiser le mot de passe</h1>
-        <p class="sub">Ouvre cette page uniquement via le lien reçu par email Supabase.</p>
+  btn.onclick = async () => {
+    const p1 = document.getElementById("p1").value;
+    const p2 = document.getElementById("p2").value;
 
-        <label for="password">Nouveau mot de passe</label>
-        <input id="password" type="password" placeholder="Au moins 6 caractères" />
+    if (p1.length < 6) {
+      setMsg("Le mot de passe est trop court.", "error");
+      return;
+    }
 
-        <label for="password2">Confirmer le mot de passe</label>
-        <input id="password2" type="password" placeholder="Retape le même" />
+    if (p1 !== p2) {
+      setMsg("Les mots de passe ne correspondent pas.", "error");
+      return;
+    }
 
-        <button id="btn" disabled>Valider</button>
+    btn.disabled = true;
+    setMsg("Mise à jour en cours…");
 
-        <div id="msg" class="msg">Chargement…</div>
+    const { error } = await supabase.auth.updateUser({ password: p1 });
 
-        <div class="tiny">
-          Si tu vois <code>localhost</code> dans l’URL du lien reçu, c’est une mauvaise redirection Supabase.
-        </div>
-      </div>
-    </div>
+    if (error) {
+      setMsg("Erreur lors de la mise à jour.", "error");
+      btn.disabled = false;
+    } else {
+      setMsg("Mot de passe modifié avec succès.", "ok");
+    }
+  };
 
-    <script>
-      // =========================
-      // CONFIG (à remplacer)
-      // =========================
-      const SUPABASE_URL = "https://bficrofdrgmuljunccsv.supabase.co";
-      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmaWNyb2ZkcmdtdWxqdW5jY3N2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5MzUxNjgsImV4cCI6MjA4MTUxMTE2OH0.xXo9uidS7dIawD7tUCA-T7255Ys14HCMkqh5cBM9Acw";
-
-      // =========================
-      // UI helpers
-      // =========================
-      const msgEl = document.getElementById("msg");
-      const btnEl = document.getElementById("btn");
-
-      function setMsg(text, type = "info") {
-        msgEl.classList.remove("error", "ok");
-        if (type === "error") msgEl.classList.add("error");
-        if (type === "ok") msgEl.classList.add("ok");
-        msgEl.textContent = text;
-        console.log(text);
-      }
-
-      function assertConfig() {
-        if (!SUPABASE_URL || SUPABASE_URL.includes("TON_SUPABASE_URL")) {
-          setMsg("❌ Tu n'as pas mis SUPABASE_URL.\n➡️ Remplace TON_SUPABASE_URL dans le fichier.", "error");
-          return false;
-        }
-        if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.includes("TON_SUPABASE_ANON_KEY")) {
-          setMsg("❌ Tu n'as pas mis SUPABASE_ANON_KEY.\n➡️ Remplace TON_SUPABASE_ANON_KEY dans le fichier.", "error");
-          return false;
-        }
-        return true;
-      }
-
-      // =========================
-      // Init Supabase
-      // =========================
-      if (!window.supabase || !window.supabase.createClient) {
-        setMsg("❌ Supabase JS n'est pas chargé (CDN inaccessible).", "error");
-        throw new Error("Supabase JS not loaded");
-      }
-
-      let client = null;
-      if (assertConfig()) {
-        client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      }
-
-      // =========================
-      // Parse URL (hash tokens / PKCE code)
-      // =========================
-      function parseHash() {
-        const h = window.location.hash.replace("#", "");
-        const p = new URLSearchParams(h);
-        return {
-          access_token: p.get("access_token"),
-          refresh_token: p.get("refresh_token"),
-          type: p.get("type"),
-          error: p.get("error"),
-          error_description: p.get("error_description"),
-        };
-      }
-
-      async function validateLinkAndCreateSession() {
-        if (!client) return false;
-
-        // Erreur renvoyée dans le hash ?
-        const hash = parseHash();
-        if (hash.error) {
-          setMsg("❌ Erreur dans le lien:\n" + (hash.error_description || hash.error), "error");
-          return false;
-        }
-
-        // PKCE : ?code=...
-        const url = new URL(window.location.href);
-        const code = url.searchParams.get("code");
-        if (code) {
-          setMsg("🔄 Validation du lien (code)…");
-          const { error } = await client.auth.exchangeCodeForSession(window.location.href);
-          if (error) {
-            setMsg("❌ Validation code impossible:\n" + error.message, "error");
-            return false;
-          }
-          setMsg("✅ Lien valide. Tu peux changer ton mot de passe.");
-          return true;
-        }
-
-        // Implicit : tokens dans le hash
-        if (hash.access_token && hash.refresh_token) {
-          setMsg("🔄 Validation du lien (token)…");
-          const { error } = await client.auth.setSession({
-            access_token: hash.access_token,
-            refresh_token: hash.refresh_token,
-          });
-          if (error) {
-            setMsg("❌ Validation token impossible:\n" + error.message, "error");
-            return false;
-          }
-          setMsg("✅ Lien valide. Tu peux changer ton mot de passe.");
-          return true;
-        }
-
-        // Déjà une session ?
-        const { data, error } = await client.auth.getSession();
-        if (error) {
-          setMsg("❌ Erreur getSession:\n" + error.message, "error");
-          return false;
-        }
-        if (data.session) {
-          setMsg("✅ Session active. Tu peux changer ton mot de passe.");
-          return true;
-        }
-
-        setMsg(
-          "❌ Aucun token détecté dans l’URL.\n➡️ Ouvre cette page UNIQUEMENT via le lien reçu par email Supabase.",
-          "error"
-        );
-        return false;
-      }
-
-      // =========================
-      // Reset password
-      // =========================
-      async function resetPassword() {
-        if (!client) return;
-
-        const p1 = document.getElementById("password").value.trim();
-        const p2 = document.getElementById("password2").value.trim();
-
-        if (!p1 || p1.length < 6) return setMsg("❌ Mot de passe trop court (min 6).", "error");
-        if (p1 !== p2) return setMsg("❌ Les mots de passe ne correspondent pas.", "error");
-
-        btnEl.disabled = true;
-        setMsg("🔄 Mise à jour du mot de passe…");
-
-        const { data, error: sErr } = await client.auth.getSession();
-        if (sErr) {
-          btnEl.disabled = false;
-          return setMsg("❌ Erreur session:\n" + sErr.message, "error");
-        }
-        if (!data.session) {
-          btnEl.disabled = false;
-          return setMsg("❌ Pas de session active.\n➡️ Clique à nouveau sur le lien reçu par email.", "error");
-        }
-
-        const { error } = await client.auth.updateUser({ password: p1 });
-        if (error) {
-          btnEl.disabled = false;
-          return setMsg("❌ Erreur updateUser:\n" + error.message, "error");
-        }
-
-        setMsg("✅ Mot de passe modifié !\n➡️ Tu peux retourner dans l’app et te connecter.", "ok");
-      }
-
-      // =========================
-      // Boot
-      // =========================
-      btnEl.addEventListener("click", resetPassword);
-
-      (async () => {
-        try {
-          btnEl.disabled = true;
-          const ok = await validateLinkAndCreateSession();
-          btnEl.disabled = !ok;
-        } catch (e) {
-          btnEl.disabled = true;
-          setMsg("❌ Erreur inattendue:\n" + (e?.message || String(e)), "error");
-        }
-      })();
-    </script>
-  </body>
+  initSession();
+</script>
+</body>
 </html>
