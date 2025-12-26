@@ -1,3 +1,8 @@
+
+Enzo Rol <role9556@gmail.com>
+4:30 PM (0 minutes ago)
+to me
+
 <!doctype html>
 <html lang="fr">
 <head>
@@ -16,7 +21,6 @@
       min-height: 100vh;
       padding: 20px;
     }
-
     .card {
       background: #fff;
       width: 100%;
@@ -25,24 +29,9 @@
       border-radius: 16px;
       box-shadow: 0 10px 30px rgba(0,0,0,.1);
     }
-
-    h1 {
-      margin: 0 0 12px;
-      font-size: 24px;
-    }
-
-    p {
-      margin: 0 0 20px;
-      color: #555;
-      font-size: 14px;
-    }
-
-    label {
-      font-size: 13px;
-      margin-bottom: 6px;
-      display: block;
-    }
-
+    h1 { margin: 0 0 12px; font-size: 24px; }
+    p { margin: 0 0 20px; color: #555; font-size: 14px; line-height: 1.4; }
+    label { font-size: 13px; margin-bottom: 6px; display: block; }
     input {
       width: 100%;
       padding: 14px;
@@ -50,8 +39,9 @@
       border-radius: 12px;
       border: 1px solid #ddd;
       margin-bottom: 14px;
+      outline: none;
     }
-
+    input:focus { border-color: #1677ff; box-shadow: 0 0 0 3px rgba(22,119,255,.12); }
     button {
       width: 100%;
       padding: 14px;
@@ -60,21 +50,11 @@
       border: none;
       background: #1677ff;
       color: #fff;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
     }
-
-    button:disabled {
-      opacity: .6;
-      cursor: not-allowed;
-    }
-
-    .msg {
-      margin-top: 14px;
-      font-size: 14px;
-      min-height: 20px;
-    }
-
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    .msg { margin-top: 14px; font-size: 14px; min-height: 20px; }
     .error { color: #d92d20; }
     .ok { color: #027a48; }
   </style>
@@ -87,94 +67,107 @@
     <h1>Nouveau mot de passe</h1>
     <p>Choisissez un nouveau mot de passe pour votre compte.</p>
 
-    <label>Nouveau mot de passe</label>
-    <input id="p1" type="password" />
+    <label for="p1">Nouveau mot de passe</label>
+    <input id="p1" type="password" autocomplete="new-password" />
 
-    <label>Confirmer le mot de passe</label>
-    <input id="p2" type="password" />
+    <label for="p2">Confirmer le mot de passe</label>
+    <input id="p2" type="password" autocomplete="new-password" />
 
     <button id="btn" disabled>Valider</button>
-
     <div id="msg" class="msg"></div>
   </div>
 
-<script>
-  const SUPABASE_URL = "https://bficrofdrgmuljunccsv.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmaWNyb2ZkcmdtdWxqdW5jY3N2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5MzUxNjgsImV4cCI6MjA4MTUxMTE2OH0.xXo9uidS7dIawD7tUCA-T7255Ys14HCMkqh5cBM9Acw";
+  <script>
+    const SUPABASE_URL = "https://bficrofdrgmuljunccsv.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmaWNyb2ZkcmdtdWxqdW5jY3N2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5MzUxNjgsImV4cCI6MjA4MTUxMTE2OH0.xXo9uidS7dIawD7tUCA-T7255Ys14HCMkqh5cBM9Acw";
 
-  const supabase = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY
-  );
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  const btn = document.getElementById("btn");
-  const msg = document.getElementById("msg");
+    const btn = document.getElementById("btn");
+    const msg = document.getElementById("msg");
 
-  function setMsg(text, type) {
-    msg.className = "msg " + (type || "");
-    msg.textContent = text || "";
-  }
-
-  function parseHash() {
-    const h = window.location.hash.replace("#", "");
-    return new URLSearchParams(h);
-  }
-
-  async function initSession() {
-    const params = parseHash();
-
-    if (params.get("access_token")) {
-      await supabase.auth.setSession({
-        access_token: params.get("access_token"),
-        refresh_token: params.get("refresh_token"),
-      });
-      btn.disabled = false;
-      return;
+    function setMsg(text, type) {
+      msg.className = "msg " + (type || "");
+      msg.textContent = text || "";
     }
 
-    const url = new URL(window.location.href);
-    const code = url.searchParams.get("code");
-    if (code) {
-      const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
-      if (!error) {
+    function enableForm() {
+      btn.disabled = false;
+      setMsg("");
+    }
+
+    function getHashParams() {
+      const h = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : "";
+      return new URLSearchParams(h);
+    }
+
+    async function ensureSession() {
+      const { data } = await supabase.auth.getSession();
+      return !!data?.session;
+    }
+
+    async function ensureSessionAndEnable() {
+      const ok = await ensureSession();
+      if (ok) enableForm();
+      return ok;
+    }
+
+    async function init() {
+      // 1) Cas tokens dans le hash (#access_token=...&refresh_token=...)
+      const hp = getHashParams();
+      const access_token = hp.get("access_token");
+      const refresh_token = hp.get("refresh_token");
+
+      if (access_token && refresh_token) {
+        const { error } = await supabase.auth.setSession({ access_token, refresh_token });
+        if (!error && await ensureSessionAndEnable()) return;
+        setMsg("Lien invalide ou expiré.", "error");
+        return;
+      }
+
+      // 2) Cas code dans l'URL (?code=...)
+      const url = new URL(window.location.href);
+      const code = url.searchParams.get("code");
+
+      if (code) {
+        // URL "clean" (sans hash)
+        const cleanUrl = url.origin + url.pathname + url.search;
+        const { error } = await supabase.auth.exchangeCodeForSession(cleanUrl);
+        if (!error && await ensureSessionAndEnable()) return;
+        setMsg("Lien invalide ou expiré.", "error");
+        return;
+      }
+
+      // 3) Rien d'exploitable
+      setMsg("Lien invalide ou expiré.", "error");
+    }
+
+    btn.addEventListener("click", async () => {
+      const p1 = document.getElementById("p1").value.trim();
+      const p2 = document.getElementById("p2").value.trim();
+
+      if (p1.length < 6) { setMsg("Le mot de passe est trop court.", "error"); return; }
+      if (p1 !== p2) { setMsg("Les mots de passe ne correspondent pas.", "error"); return; }
+
+      // sécurité : si pas de session, inutile
+      const ok = await ensureSession();
+      if (!ok) { setMsg("Lien invalide ou expiré.", "error"); btn.disabled = true; return; }
+
+      btn.disabled = true;
+      setMsg("Mise à jour en cours…");
+
+      const { error } = await supabase.auth.updateUser({ password: p1 });
+
+      if (error) {
+        setMsg("Erreur lors de la mise à jour.", "error");
         btn.disabled = false;
       } else {
-        setMsg("Lien invalide ou expiré.", "error");
+        setMsg("Mot de passe modifié avec succès.", "ok");
       }
-      return;
-    }
+    });
 
-    setMsg("Lien invalide ou expiré.", "error");
-  }
-
-  btn.onclick = async () => {
-    const p1 = document.getElementById("p1").value;
-    const p2 = document.getElementById("p2").value;
-
-    if (p1.length < 6) {
-      setMsg("Le mot de passe est trop court.", "error");
-      return;
-    }
-
-    if (p1 !== p2) {
-      setMsg("Les mots de passe ne correspondent pas.", "error");
-      return;
-    }
-
-    btn.disabled = true;
-    setMsg("Mise à jour en cours…");
-
-    const { error } = await supabase.auth.updateUser({ password: p1 });
-
-    if (error) {
-      setMsg("Erreur lors de la mise à jour.", "error");
-      btn.disabled = false;
-    } else {
-      setMsg("Mot de passe modifié avec succès.", "ok");
-    }
-  };
-
-  initSession();
-</script>
+    init();
+  </script>
 </body>
 </html>
+```0
